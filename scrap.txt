@@ -1,0 +1,785 @@
+	//uint16_t (*pointer)[];
+	//(pointer)[0]	=	(uint16_t )&sample_data[0];
+	//(pointer)[1]	=	(uint16_t )&sample_data_4[0];
+	//(pointer)[2]	=	(uint16_t )&sample_data_2[0];
+	//*pointer	=	&sample_data[0];
+		//uint8_t pointer_size2 = sizeof(*pointer)/sizeof(uint16_t);
+//i think not needed
+//device_present_state_Update (onstate);
+//you might have to put previous state to be eliminate the need to restart after volume control
+//			*volume_cont_reg = HP_R_GAIN_ADD;
+//			*(volume_cont_reg +1) = device_volume;
+//			*(volume_cont_reg +2) = HP_L_GAIN_ADD;
+//			*(volume_cont_reg +3) = device_volume;
+
+//rtc_total_switch_counter ();
+				//rtc_switch_start_time();
+
+//				uint8_t volume_control_data2 [4] =  {HP_R_CTRL_ADD, RIGHT_VOLUME(device_volume), HP_L_CTRL_ADD, LEFT_VOLUME(device_volume)};
+					//return back to on mode and do some state update here
+					//device_past_state_update( );
+
+//include codes to start volume controll here
+				if ((nrf_gpio_pin_read (13) == 1) &( rtc_elapse_time() >= TWOSECONDTICKDURATION) & (rtc_switch_counter( ) == 0 ))
+				{
+					//return back to on mode and do some state update here
+				}
+				else if ((nrf_gpio_pin_read (13) == 0))
+				{
+					audiocodec_volume_control(1);					
+					rtc_reset_time ();
+				}
+				else if ((rtc_switch_counter( ) >= 1 ))
+				{
+					audiocodec_volume_control(1);
+					rtc_reset_time ();
+				}
+				//rtc_reset_time ();				
+				//audiocodec_stop_i2s( );
+
+//		if ((rtc_switch_counter( ) > 0) & (device_state () == onstate))	//time is been captured to determine next action
+//		{
+//				if (rtc_switch_counter( ) < TWOSECONDTICKDURATION)	//off device
+//				{
+//					if (device_state () == onstate)
+//					{
+//						device_state_update2 (onstate, offstate);	//updated past device state					
+//					}
+//					//inlcude codes for volume control here										
+//				}
+//				else device_state_update2 (onstate, volume);	//updated past device state
+//				
+////you need to update the timers here to be ready for the next
+//					rtc_reset_time ();
+//		}
+
+((nrf_gpio_pin_read (13) == 0 ) | 
+
+//					state_delay.starttime_delay++;
+//			if (state_delay.starttime_delay > (1000))
+//			{
+//					state_delay.starttime_delay = 0;
+//					state_of_transision = false;
+//			}
+		
+		
+//uint16_t	sub_counter = 0;	
+		//below code is not accurate	
+			//number_of_words = (number_of_words - (i2s_data_struct.data_sample_max * 2));	//cos index starts counting from 0 you need to put this in to consideration
+			//compensate for data index starting from 0
+			//i2s_data_struct.total_data_moved_data_cou =			i2s_data_struct.total_data_moved_data_cou + 2;
+
+		//i2s_data_struct.data_sample_index_cou++;	//move to next data to copied to the buffer
+		//i2s_data_struct.total_data_moved_data_cou = i2s_data_struct.total_data_moved_data_cou + number_of_words;	//update total buffer moved
+	
+
+//calculate the number of buffer transfers needed
+	uint16_t	data_remaining;
+	uint32_t	data_calculation = i2s_data_struct.total_data_sample_size;
+	while ((i2s_data_struct.buffer_size) < data_calculation)	
+	{
+		data_calculation = data_calculation - (i2s_data_struct.buffer_size);
+		i2s_data_struct.buffer_moved_max ++;		//capture the number of needed buffer transfers	
+	}
+	data_remaining = data_calculation;
+	//enlarge the buffer size for the remaining data
+	data_calculation 		=0;
+	while (i2s_data_struct.buffer_moved_max < data_remaining )
+	{
+		data_remaining = data_remaining - i2s_data_struct.buffer_moved_max;
+		data_calculation++;
+
+	}
+			i2s_data_struct.buffer_size = (i2s_data_struct.buffer_size + (data_calculation >> 1));	//increase buffer size for the remaining data	
+	
+
+#endif	
+	
+	#ifdef FOREVER_PLAY
+	for (main_counter = 0; main_counter < number_of_words; main_counter++)	//move data to buffer for start function
+	{
+		//include codes incase you run out of data
+		((uint16_t *)p_buffer)[2 * main_counter] = *(data_address_pointer2[0] + (sub_counter));	//are all present data samples moved
+		sub_counter ++;
+		((uint16_t *)p_buffer)[(2* main_counter) + 1] = *(data_address_pointer2[0] + (sub_counter));	//are all present data samples moved
+		sub_counter ++;
+	}
+	
+	#else
+
+void audiocodec_i2s_start_transmit_data(uint32_t *i2s_data_transmit, uint16_t *i2s_data_size)
+{
+	
+	#ifdef FOREVER_MUSIC2
+	*i2s_data_size = i2s_data_struct.buffer_size;
+		uint32_t  main_counter;		//keeps track of the data been transfered to the buffer of the start driver function
+	//memcpy(i2s_data_transmit, &sample_data[0], (i2s_data_struct.buffer_size*2));
+	for (main_counter = 0; main_counter < (i2s_data_struct.buffer_size); main_counter++)
+	{
+		((uint16_t *)i2s_data_transmit)[(2*main_counter)] = *(unsigned *)& sample_data_2[(2*main_counter)];
+		((uint16_t *)i2s_data_transmit)[(2*main_counter) +1] = *(unsigned *)& sample_data_2[(2*main_counter)+1];
+	}
+	
+	#else
+		
+	if (i2s_data_struct.buffer_moved_cou == i2s_data_struct.buffer_moved_max)
+	{
+		//test for all has been sent to the output
+	}
+	*i2s_data_size = i2s_data_struct.buffer_size; 
+	int16_t	 transfer_buffer;
+	uint32_t  main_counter;		//keeps track of the data been transfered to the buffer of the start driver function
+	for (main_counter = 0; main_counter < (i2s_data_struct.buffer_size); main_counter++)	//move data to buffer for start function
+	{
+		// *(unsigned *)
+		transfer_buffer	= (*(data_address_pointer2[i2s_data_struct.data_sample_cou] + i2s_data_struct.data_sample_index_cou)); 
+		((uint16_t *)i2s_data_transmit)[(2*main_counter)] = *(unsigned *)&transfer_buffer;	//move to first 16bit
+		i2s_data_struct.data_sample_index_cou ++;
+		 transfer_buffer	=  (*(data_address_pointer2[i2s_data_struct.data_sample_cou] + i2s_data_struct.data_sample_index_cou));
+		((uint16_t *)i2s_data_transmit)[(2*main_counter)+1] =	*(unsigned *)&transfer_buffer;		//move to 2nd 16bit
+		i2s_data_struct.data_sample_index_cou ++;
+		if ((i2s_data_struct.data_size[i2s_data_struct.data_sample_cou] - 1) < (i2s_data_struct.data_sample_index_cou))	//  if all data of a sample has been moved out
+		{
+			i2s_data_struct.data_sample_cou++;	//next data sample
+			i2s_data_struct.data_sample_index_cou = 0;	//start from index 0 of next data sample
+		}	
+	}
+	i2s_data_struct.total_data_moved_buffer_cou = i2s_data_struct.total_data_moved_buffer_cou + i2s_data_struct.buffer_size;
+#endif
+}	
+	
+	//??clear mute function, you are yet to add the address for this in the address bank
+
+
+	#ifdef MONO_MODE
+	config_struct.dai_ctrl = (BIT0+BIT1+BIT4+BIT5+BIT6+BIT7);	//enable dai, i2s mode, dataout is driven as required for mono mode
+	#else
+	config_struct.dai_ctrl = (BIT6+BIT7);	//enable dai, i2s mode, dataout is driven as required stereo mode
+	#endif
+	const uint16_t *data_address_pointer;	//pointer to start address of each of the data	
+	data_address_pointer = &sample_data[0];	//not needed	
+	config_struct.dig_routing_dai = (BIT0+BIT1+BIT5);		//dai data is routed via the r and l channels
+	config_struct.sr =	(BIT0);	 		//sample rate of 8KHz 
+	config_struct.pll_frac_top	= (PLL_FRAC_TOP_VALUE);	//  24
+	config_struct.pll_frac_buttom = (PLL_FRAC_BOTTON_VALUE);		//100
+	config_struct.pll_integer	= (PLL_INTEGER);									//57
+	config_struct.dai_clk_mode= (0);
+	config_struct.dig_routing_dac = (BIT1+BIT3+BIT4+BIT5+BIT7);		//i2s dig data roauting  seleced for dia for both right and left channel	
+	//?serious issues with this
+	config_struct.dac_filter4 = (0);	//(BIT0+BIT1+BIT2+BIT3+BIT7); //0;	//(BIT0+BIT1+BIT2+BIT3+BIT7);		//enable dac equalizer + enable band5
+	config_struct.dac_filter1 = 0; 		//disable dac high pass filter
+	config_struct.dac_l_digital_gain = (BIT0+BIT1+BIT2+BIT3+BIT4+BIT5+BIT6);	//gain of 12db	
+	config_struct.dac_r_digital_gain = (BIT0+BIT1+BIT2+BIT3+BIT4+BIT5+BIT6);	//gain of 12db
+	config_struct.hp_l_gain = (BIT0+BIT1+BIT2+BIT3+BIT4+BIT5+BIT6);		//15db gain hp_l_gain
+	config_struct.hp_r_gain = (BIT0+BIT1+BIT2+BIT3+BIT4+BIT5+BIT6);		//15db gain hp_l_gain	
+	config_struct.line_gain = (BIT0+BIT1+BIT2+BIT3+BIT4+BIT5+BIT6);		//15db gain hp_l_gain
+	config_struct.mixout_l_select	= (BIT3);	//mixer input is only from the DAC_L
+	config_struct.mixout_r_select	= (BIT3);	//mixer input is only from the DAC_R
+	//verify below 
+	//config_struct.dai_ctrl = 0;	//clear bits and select word length to be 16 bit	
+	config_struct.gain_ramp_ctrl = (BIT1);		//norminal rate *16 for the ramp rate
+	config_struct.mixout_l_ctrl = (BIT3+BIT4+BIT7);	//mix enable, amp enable and soft mix enabled
+	config_struct.mixout_r_ctrl = (BIT3+BIT4+BIT7); //mix enable, amp enable and soft mix enabled
+	//??clear mute function, you are yet to add the address for this in the address bank
+	config_struct.dac_l_ctrl |= (BIT5+BIT7);				//enable dac l and gain ramp, mute enable
+	config_struct.dac_r_ctrl |= (BIT5+BIT7);				//enable dac r and gain ramp, mute enable
+	config_struct.hp_r_ctrl = (BIT3+BIT5+BIT7); //enable headphones + ramp enable + amplifier
+	config_struct.hp_l_ctrl = (BIT3+BIT5+BIT7);
+	config_struct.pll_ctrl = (BIT7);  //	SRM PLL mode  BIT6 will be enabled after i2s is enabled
+	config_struct.line_ctrl	= (BIT3+BIT5+BIT7);	//enable speakerline + ramp enable + amplifier
+	#ifdef MONO_MODE
+	config_struct.dai_ctrl = (BIT0+BIT1+BIT4+BIT5+BIT6+BIT7);	//enable dai, i2s mode, dataout is driven as required for mono mode
+	#else
+	config_struct.dai_ctrl = (BIT6+BIT7);	//enable dai, i2s mode, dataout is driven as required stereo mode
+	#endif
+	
+//initialize the audio codec via i2c1
+	if (I2C1master_StartTX (Audiocodec_init, false) == 0)	//transmit fail
+	{
+		result = 0;
+	}
+	//include code for error capture
+}
+
+
+const uint8_t pll_srm_enable[2] = {PLL_CTRL_ADD, PLL_CTRL_ENABLE_COMMAND};
+
+//				datasize = (sizeof(codec_repeat_write)/ sizeof(uint8_t));			
+//				for (uint8_t counter = 0; counter <datasize; counter++)
+//				{
+//					transmit_buffer_i2c[counter] = codec_repeat_write[counter];		
+//				}
+
+#ifdef TEST_CODE
+	i2s_data_struct.buffer_size = 20;	//divide by 4
+	i2s_data_struct.buffer_moved_max = 2;
+	#else
+
+#ifdef TEST_CODE
+//10 data samples
+const uint16_t sample_data[ ]= {0x007a, 0x0012, 0x000e, 0x002d, 0x0072, 0x007e, 0x0011, 0x0018, 0x0067, 0x0016, 															0x0096, 0x00b7, 0x0011, 0x003e, 0x007d, 0x0017, 0x0055, 0x0021, 0x004c, 0x0022};
+//15 data samples
+const uint16_t sample_data_2[ ]= {0x00a7, 0x007f, 0x0070, 0x0070, 0x006f, 0x0028, 0x0016, 
+																	0x0005, 0x0022, 0x0055, 0x0067, 0x0037, 0x0031, 0x0058, 0x004b,}
+const uint16_t sample_data_3[ ]= {0x007a, 0x0012, 0x000e, 0x002d, 0x0072, 0x007e, 0x0011, 0x0018, 0x0067, 0x0016};
+//5 data samples
+const uint16_t sample_data_4[ ]= {0x007a, 0x0012, 0x000e, 0x002d, 0x0072};
+
+#else
+
+	#ifdef TEST_CODE
+	*i2s_data_size = 20;
+	#else
+	#endif
+void audiocodec_i2s_start_transmit_data(uint32_t *i2s_data_transmit, uint16_t *i2s_data_size)
+{
+	if (i2s_data_struct.buffer_moved_cou == i2s_data_struct.buffer_moved_max)
+	{
+		//test for all has been sent to the output
+	}
+	#ifdef TEST_CODE
+	*i2s_data_size = 20;
+
+
+#else
+	*i2s_data_size = (i2s_data_struct.buffer_size  * 2); //; // * 2);		//this might not be correct  veryify cos of 16 and 32 bit data
+	#endif
+	uint8_t  main_counter;		//keeps track of the data been transfered to the buffer of the start driver function
+	//uint8_t number_of_sample_transfered = 1;  //first sample is been transfered   i2s_data_struct.buffer_size
+	for (main_counter = 0; main_counter < i2s_data_struct.buffer_size; main_counter++)	//move data to buffer for start function
+	{
+		i2s_data_transmit[main_counter] = *(data_address_pointer2[i2s_data_struct.data_sample_cou] + i2s_data_struct.data_sample_index_cou);	//are all present data samples moved
+		i2s_data_struct.data_sample_index_cou ++;
+		if ((i2s_data_struct.data_sample_index_cou) ==i2s_data_struct.data_size[i2s_data_struct.data_sample_cou])	//  if all data of a sample has been moved out
+		{
+			i2s_data_struct.data_sample_cou++;	//next data sample
+//			number_of_sample_transfered++;	//next data sample is to me moved out
+			i2s_data_struct.data_sample_index_cou = 0;	//start from index 0 of next data sample
+		}
+	}
+	//i2s_data_struct.buffer_moved_cou = i2s_data_struct.buffer_moved_cou + number_of_sample_transfered;	//update buffer counter
+}	
+	
+	
+	//data_amount = sizeof(transmit_buffer) /sizeof(uint32_t);
+	//memcpy(transmit_buffer, transmit_buffer, data_amount);
+
+	uint32_t	total_data_transfered = i2s_data_struct.buffer_size; //declare and initialise
+	uint32_t	total_data_transfered_expected;			// = i2s_data_struct.data_size[0];	//declare and initialise
+	uint16_t	data_upset_value;		//data remaining to tbe moved out
+//data sampled lased moved	
+	for (int cou =0; cou < i2s_data_struct.data_sample_cou; cou++)
+	{
+		total_data_transfered_expected  = i2s_data_struct.data_size[cou];
+		
+	}
+	//amount of data moved
+	for (int cou =0; cou < i2s_data_struct.buffer_moved_cou; cou++)
+	{
+		total_data_transfered  = i2s_data_struct.buffer_size;	
+	}
+	
+	data_upset_value =  total_data_transfered_expected - total_data_transfered;
+	data_upset_value =  data_upset_value - i2s_data_struct.data_size[i2s_data_struct.data_sample_cou];
+
+	
+
+if (number_of_sample_transfered == 1)	//buffer cannot contain all data of a given sample
+	{
+		if (i2s_data_struct.buffer_size  == i2s_data_struct.data_size[i2s_data_struct.data_sample_cou])
+		{
+				i2s_data_struct.data_sample_cou++;	//present data sample been sent to the start function buffer
+				i2s_data_struct.data_sample_index_cou = 0;	//start from index 0 of next data sample
+		}		
+	}
+	if (i2s_data_struct.data_sample_index_cou == i2s_data_struct.data_size[i2s_data_struct.data_sample_cou] )
+	{
+				i2s_data_struct.data_sample_cou++;	//present data sample been sent to the start function buffer
+				i2s_data_struct.data_sample_index_cou = 0;	//start from index 0 of next data sample	
+	}
+
+//(*(data_address_pointer + 1)) = sample_data_2[0];
+	//(*(data_address_pointer +2 )) = sample_data_3[0];
+
+//transfer data size into array
+	//???
+	for (int counter = 0; counter <DATA_SIZE; counter++)
+	{
+		data_sizes[counter] =  messages_size [counter] ;	
+	}
+
+i2s_data_struct.buffer_moved_max = 0;	//might not be needed
+
+//forever loop
+		*buffer_size = (data_sizes[0]);
+
+
+for (int cou =0; cou < *buffer_size; cou++)
+	{
+		p_buffer[cou] = sample_data[cou ];
+	}
+	
+//		if (data_size_counter == sample_size)
+//		{
+//			data_size_counter = 0;
+//			all_data_out = 1;
+//			//include codes to stop the codedi2s  but this will be in error as it is meant to stop at the i2s session
+//		};
+//		//codes to update buffer size passed to the i2c start function
+//		
+//		*buffer_size =  (data_sizes[data_size_counter] * 2);
+//		for (int cou; cou < number_of_words; cou ++)
+//		{
+//			((uint16_t *)p_buffer)[2*cou] 		= *data_address_pointer2 [data_size_counter] + (2*cou);
+//			((uint16_t *)p_buffer)[2*cou +1] 	= *data_address_pointer2 [data_size_counter] + ((2*cou) +1);			
+//		}	
+//		data_size_counter++;
+
+
+if (i2s_data_struct.buffer_size < i2s_data_struct.data_size[i2s_data_struct.data_sample_cou])	//data size larger than buffer	
+	{
+	//no increase to next data sample
+	}
+	else if (number_of_sample_transfered > 1)
+	{
+		
+	}
+	else i2s_data_struct.data_sample_cou++;	//present data sample been sent to the start function buffer
+	
+	i2s_data_struct.buffer_moved_cou++;	//update buffer counter
+
+
+#define	BUFEER_SIZE_FACTOR2	(BUFEER_SIZE_FACTOR >>2)
+uint8_t number_of_transfers;
+
+if ((i2s_data_struct.total_data_sample_size >> BUFEER_SIZE_FACTOR2) ==0)
+		number_of_transfers = BUFEER_SIZE_FACTOR;
+	else
+		number_of_transfers = BUFEER_SIZE_FACTOR +1;
+
+Hi,
+
+Thanks again.  I need a little explanation on this function in the I2S driver 
+
+typedef void(* nrf_drv_i2s_data_handler_t)(uint32_t const *p_data_received, uint32_t *p_data_to_send, uint16_t number_of_words)
+
+in the I2S sample programme, there is not reference to how i can vary the number of words param
+
+//	memcpy(i2s_data_transmit, (const uint32_t)(data_address_pointer2[data_size_counter]),data_sizes[data_size_counter]);	
+
+		//codes to update buffer, update upper half of the buffer
+		uint16_t *data_address = &data_addresses[data_size_counter];
+		uint16_t xyz[] ={0};		//data values
+		uint16_t abc ;		// size
+		for (int cou=0; cou< data_sizes[data_size_counter]; cou ++)	//size of data test
+		{
+			xyz[cou]  = *(data_address_pointer2[data_size_counter] + cou );
+			cou++;
+			//option 2
+			//xyz =  *(*(data_address + data_size_counter));
+		}
+		abc =  data_sizes[data_size_counter];
+		uint16_t datasize = 0;
+
+
+uint16_t *message_address;
+	//	message_address = data_address_pointer[data_size_counter ];
+			for (uint8_t  counter1= 0;  counter1 < datasize; counter1++)	//mpove data to buffer
+			{
+				//transmit_buffer_i2s[counter1] = (uint16_t)*message_address;
+				message_address++;
+			}
+
+
+//I2Smaster_startTransmit( );	//start movement of data from soc and the codec i2s	
+		//I2Smaster_Transmit_Data_size(number_of_data);
+		//start i2s via i2c1 
+
+//	data_address_pointer = &data_address[0];
+	//uint8_t messages_size [] = {sizeof(sample_data)/sizeof(sample_data[0])};
+		//uint16_t *message_address[ ] ={(uint16_t*)&sample_data, (uint16_t*)&sample_data_2 ,(uint16_t*)&sample_data_3};
+	//data_address_pointer[] ={sample_data, sample_data_2 ,sample_data_3};
+	
+
+   // config.sdin_pin     = I2S_CONFIG_SDIN_PIN;
+    config.irq_priority = I2S_CONFIG_IRQ_PRIORITY;
+    //config.mode         = I2S_CONFIG_MASTER;
+    //config.format       = I2S_CONFIG_FORMAT;
+    config.alignment    = I2S_CONFIG_ALIGN;		//am not usre of this and the difference between format and align
+   // config.sample_width = I2S_CONFIG_SWIDTH;
+    //config.channels     = I2S_CONFIG_CHANNELS;
+    config.mck_setup    = I2S_CONFIG_MCK_SETUP;
+    //config.ratio        = I2S_CONFIG_RATIO;
+		config.alignment	=	I2S_CONFIG_ALIGN_ALIGN_LEFT,
+		config.channels		=	(I2S_CONFIG_CHANNELS_CHANNELS_RIGHT +I2S_CONFIG_CHANNELS_CHANNELS_LEFT),
+		config.format			=	I2S_CONFIG_FORMAT_FORMAT_I2S,
+		config.irq_priority	=	APP_IRQ_PRIORITY_HIGH,
+		config.lrck_pin			=	I2S_WCLK_PORT,
+		config.mck_pin			=	I2S_MCLK_PORT,
+		config.ratio				=	I2S_CONFIG_RATIO_RATIO_256X,
+		config.sample_width	=	I2S_CONFIG_SWIDTH_SWIDTH_16BIT,
+		config.sck_pin 			=	I2S_BCLK_PORT,
+		config.sdout_pin 		=  I2S_DATAIN_PORT,	
+
+Hi, 
+
+I think i have been able to solve it at the end of today.
+
+I included a 
+
+while (i2c_transfer_result ==0)
+
+after the nrf_drv_twi_tx function call. and it just works well
+
+//data for repeat mode of operation for the write to the code
+//#define CODEC_REPEAT_MODE(CRM)  (CRM = {CIF_CTRL_ADD, (BIT7+BIT0)})
+//data to start codec i2s operation
+//#define I2START_COMMAND(I2SSC)	(I2SSC = {SYSTEM_ACTIVE_ADD, (BIT0)})  
+//data to stop codec i2s operation
+//#define I2STOP_COMMAND(I2SSTC)	(I2SSTC = {CIF_CTRL_ADD, (0x00)})
+
+
+//divide by 2 move address into buffer		
+//divide by 2 move address into buffer
+////below is for test purposes
+//const uint8_t config_address [] = 
+//	{TEST_DATA	, TEST_DATA	, TEST_DATA, TEST_DATA	, TEST_DATA, TEST_DATA, TEST_DATA,	
+//	TEST_DATA	, TEST_DATA	, TEST_DATA, TEST_DATA	, TEST_DATA,
+//	TEST_DATA	, TEST_DATA, TEST_DATA	, TEST_DATA, TEST_DATA, 
+//	TEST_DATA	, TEST_DATA	, TEST_DATA, TEST_DATA	, TEST_DATA};
+
+datasize = (sizeof(config_address)/ sizeof(uint8_t));
+					for (uint8_t counter; counter < datasize; counter++)
+			{
+				transmit_buffer_i2c[counter] = config_address[counter];
+			}
+			
+
+uint8_t system_active;
+	uint8_t cif_ctrl;	
+
+transmit_buffer_i2c[counter] = (uint8_t)&Config_address2;		//move data into buffer
+					Config_address2++; 
+ 
+ /***************************************************************************//**
+ * Start transmit - transmit data to the audio codec device  			
+ * @param[in]  void    		
+ * @retval     void 	
+ ******************************************************************************/
+ret_code_t Start_Transmit(void);
+
+ret_code_t Start_Transmit (void)
+{
+	ret_code_t transmit_start_result;
+	transmit_start_result =  nrf_drv_twi_tx(&i2c1_master_instance, CODEC_I2C_WRITE_ADD, &transmitbuffer[0],  10, true);
+	return transmit_start_result;
+}
+
+
+
+		config.mck_setup		=	I2S_CONFIG_MCK_SETUP,
+		config.mode					= I2S_CONFIG_MODE_MODE_Master,
+
+
+#define RESULT										&data_size
+#define DATA_SIZE (data_size_)  (RESULT = data_size_)
+
+
+/***************************************************************************//**
+ *	@brief		i2c_master.c holds all i2c1 master functions that controls the codec
+ *  @brief		configured for only transmit function and master mode
+ *  @version 	V0.0
+ *  @date	  	15.04.2016
+ *	@author 	cosinuss
+ ******************************************************************************/
+ 
+/* Includes ------------------------------------------------------------------*/
+
+#include "general_defination.h"
+#include "audiocodec_public.h"
+#include "i2c1_master_public.h"
+#include "nrf52_bitfields.h"
+#include "nrf52.h"
+#include "nrf.h"
+#include "nrf_drv_twi.h"
+#include "nrf_drv_config.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <ctype.h>
+#include "nrf_drv_twi.h"
+#include "nrf_gpio.h"
+#include "app_error.h"
+#include "nrf.h"
+#include "nrf_twi.h"
+#include "app_twi.h"
+#include "app_util_platform.h"
+
+/* Private define ------------------------------------------------------------*/
+#define	PIN3_I2C1_DATA						3	
+#define	PIN4_I2C1CLOCK						4
+#define MASTER1_INST							1
+#define BUFFER_SIZE								40
+#define MAX_PENDING_TRANSACTIONS 	1
+#define CODEC_I2C_TRANSFER_COUNT	1
+#define CODEC_I2C_DONTKNOW     0x01
+#define	CODEC_I2C_INITI_TRANSFERS	01
+
+/* Private function prototypes -----------------------------------------------*/
+ /***************************************************************************//**
+ * handles a i2c1 master event.
+ * @param[out] void  		  		
+ * @param[in]  void    		
+ * @retval     void 	
+ ******************************************************************************/
+void event_handler(ret_code_t result, void * p_user_data);
+
+ /***************************************************************************//**
+ * p context of the transfer driver
+ * @param[out] void  		  		
+ * @param[in]  void    		
+ * @retval     void 	
+ ******************************************************************************/
+void p_context(void);
+
+/* Private typedef -----------------------------------------------------------*/
+
+/* Private variables ---------------------------------------------------------*/
+static uint8_t 	TransmitBuffer[BUFFER_SIZE];
+//creation of an instance of the twi master
+static const nrf_drv_twi_t i2c1_master_instance = NRF_DRV_TWI_INSTANCE(MASTER1_INST);
+//create an i2c transaction manager instance
+static app_twi_t m_app_twi = APP_TWI_INSTANCE(MASTER1_INST);
+//holds size of data to be transmitted
+uint16_t data_size;
+static Function_owner owner;
+
+// Set default configuration of LM75B - write 0 to Conf register.
+static uint8_t const default_config[] = { CODEC_I2C_DONTKNOW, 0 };
+app_twi_transfer_t const codec_i2c_trans_descrip[CODEC_I2C_TRANSFER_COUNT] =
+{
+		//i2c address, pointer to buffer, size, flag
+    APP_TWI_WRITE(CODEC_I2C_WRITE_ADD	, default_config, sizeof(default_config), 0)
+};
+
+	
+
+/* Public functions ----------------------------------------------------------*/
+
+//??number of transfer is not been used in this case
+bool I2C1master_StartTX(Function_owner Owner_id, bool Number_of_transfer)
+{
+	//always enable instance at the start of a new transmit
+	//nrf_drv_twi_enable(i2c1_master_instance.);	
+	
+	bool result = 1;
+	
+	//update the new owner to the calling function
+	Owner_Update(Owner_id);	
+//update buffer and return size of data	
+	data_size = (audiocodec_transmit_data_i2c1(Owner_id, TransmitBuffer));
+//prepare data for transfer	
+	    static app_twi_transfer_t  const i2s_transfers[] =
+    {
+        &TransmitBuffer[0],
+        6, 		//problem with this code//DATA_SIZE(&data_size[0]), //6,	//data_size,RESULT,		//
+				0,
+				0
+    };
+//	  static app_twi_transfer_t i2s_transfers;
+//		i2s_transfers.length = data_size;
+//	  i2s_transfers.p_data	= &TransmitBuffer[0];
+
+//        MMA7660_READ_XYZ_AND_TILT(&m_buffer[2])
+//    };
+//		
+//		
+////#define MMA7660_READ_XYZ_AND_TILT(p_buffer) \
+//    //MMA7660_READ(&mma7660_xout_reg_addr, p_buffer, 4)
+
+		//i2c transaction descriptor
+    static app_twi_transaction_t const transaction =
+    {
+        .callback            = event_handler,
+        .p_user_data         = NULL,
+        .p_transfers         = i2s_transfers,
+        .number_of_transfers = sizeof(i2s_transfers) / sizeof(i2s_transfers[0])
+    };
+}
+
+
+void I2C1master_config(void )
+{
+	uint32_t err_code;
+    const nrf_drv_twi_config_t i2c1_config =
+    {
+       .scl                = PIN4_I2C1CLOCK,
+       .sda                = PIN3_I2C1_DATA,
+       .frequency          = NRF_TWI_FREQ_400K,
+       .interrupt_priority = APP_IRQ_PRIORITY_HIGH
+    };
+
+//Macro that simplifies the initialization of a TWI transaction manager instance
+	  APP_TWI_INIT(&m_app_twi, &i2c1_config, MAX_PENDING_TRANSACTIONS, err_code);
+    APP_ERROR_CHECK(err_code);
+}
+
+ret_code_t Start_Transmit (void)
+{
+    APP_ERROR_CHECK(app_twi_perform(&m_app_twi, codec_i2c_trans_descrip, CODEC_I2C_INITI_TRANSFERS, NULL));
+}
+
+void Owner_Update (Function_owner Owner_id)
+{
+	owner = Owner_id;
+}
+/* Private functions ---------------------------------------------------------*/
+void event_handler(ret_code_t result, void * p_user_data)
+{
+	if ( result == NRF_DRV_TWI_EVT_DONE)
+	{
+		nrf_drv_twi_disable(&i2c1_master_instance);		//reconcise this with above instance if there couild be a mistake	
+	}
+	else	if ( result == NRF_DRV_TWI_XFER_TX )	//transfer has started
+	{
+		
+	}
+		else	if ( result == NRF_DRV_TWI_XFER_TXTX )
+	{
+		//if (i2c_master_event->error_src = ) 
+		
+	}
+	
+}
+void p_context()
+{
+	
+}
+
+/***************************************************************************//**
+ *	@brief		i2c1_master.h for control of codec 
+ *  @version 	V0.0
+ *  @date	  	15.04.2016
+ *	@author 	cosinuss
+ ******************************************************************************/
+
+#ifndef I2C_MASTER_PUBLIC_H_
+#define I2C_MASTER_PUBLIC_H_
+
+/* Includes ------------------------------------------------------------------*/
+#include "audiocodec_public.h"
+#include <stdint.h>
+#include <stdbool.h>
+#include "app_error.h"
+#include "sdk_errors.h"
+
+/* Exported define -----------------------------------------------------------*/
+ 
+/* Exported typedef ----------------------------------------------------------*/
+typedef enum {No_owner = 0,
+							Audiocodec_init,	//for initialisation of codec
+							Audiocodec_enable,
+							Audiocodec_i2s_start,		//to start codec operation
+							Audiocodec_vol,
+							Audiocodec_stand_by,
+							} Function_owner;
+								
+
+/* Exported variables --------------------------------------------------------*/
+
+ 
+/* Exported functions --------------------------------------------------------*/
+
+ /***************************************************************************//**
+ * configure i2c1 master.
+ * @param[out] void  		  		
+ * @param[in]  void    		
+ * @retval     void 	
+ ******************************************************************************/
+void I2C1master_config(void);
+
+ /***************************************************************************//**
+ * Start transmit - transmit data to the audio codec device  			
+ * @param[in]  void    		
+ * @retval     void 	
+ ******************************************************************************/
+ret_code_t Start_Transmit(void);
+	
+ /***************************************************************************//**
+ * Function to update the identity of the function using the i2c resource
+ * @param[out] void  		
+ * @param[in]  Owner_id  owner of the function which is using the i2c resource  		   		
+ * @retval     void 	
+ ******************************************************************************/														
+void  Owner_Update (Function_owner Owner_id);
+
+/***************************************************************************//**
+ * Function to start I2C- it might be to start up device for codec configuration, i2s opertion or for volume control or for shut down purposes.
+ * @param[out] void  		
+ * @param[in]  ID 	accepts the id of the funtion that calls it 	  		
+ * @param[in]  Number_of_Transfer	for more than one transfer    		
+ * @retval     returns a true for a success and false for a faliure
+ ******************************************************************************/
+
+bool  I2C1master_StartTX(Function_owner owner_id, bool Number_of_Transfer );
+
+#endif	//I2C_MASTER_PUBLIC_H_
+
+
+	config_struct.sr =	(BIT0);	 		//sample rate of 8KHz 
+	config_struct.references 	=	(BIT3);	//master bias enable
+	config_struct.pll_frac_top	= (PLL_FRAC_TOP_VALUE);	//  pll fractional top value
+	config_struct.pll_frac_buttom = (PLL_FRAC_BOTTON_VALUE);		//pll fractional botton value
+	config_struct.pll_integer	= (PLL_INTEGER);									//pll integer value
+	config_struct.pll_ctrl	=	(BIT6+BIT7);	//enable pll in slave mode (SRM)
+	config_struct.dig_routing_dac = (BIT1+BIT5);		//left dai channel only and dac l & r output	
+	config_struct.cp_ctrl = (BIT0+BIT2+BIT3+BIT6+BIT7);		//charge pump enable and configuration
+	config_struct.hp_l_gain = (0);	//set hp volume to 0db
+	config_struct.hp_r_gain = (0);	//set hp volume to 0db
+	
+	config_struct.mixout_l_select	= (BIT3);	//mixer input is only from the DAC_L
+	config_struct.mixout_r_select	= (BIT3);	//mixer input is only from the DAC_R
+	config_struct.dummy_clock_config1 = (0x8b);	//config to dummy addresses
+	config_struct.dummy_clock_config2 = (0x03);
+	config_struct.dummy_clock_config3 = (0x00);
+
+	config_struct.ldo_ctrl	=	(BIT3);	//enable ldo
+	config_struct.gain_ramp_ctrl = (BIT1);		//norminal rate *16 for the ramp rate
+	config_struct.cp_vol_threshold1 = (BIT1+BIT2+BIT4+BIT5);
+	config_struct.cp_delay	= (BIT0+BIT2+BIT5+BIT7);	//enable automatic operataion
+	config_struct.dai_ctrl	=(BIT7+BIT6+BIT0);	//enable dai and 16 bit left justified
+	config_struct.system_mode = (BIT0+BIT3+BIT4+BIT5+BIT6+BIT7);	//activate hp, line and mixer amplifiers
+	
+const uint8_t config_address [] = 
+	{SR_ADD, REFERENCES_ADD, PLL_FRAC_TOP_ADD,  PLL_FRAC_BOTTOM_ADD, PLL_INTEGER_ADD, PLL_CTRL_ADD, DIG_ROUTING_DAC_ADD,   	
+	CP_CTRL_ADD, HP_L_GAIN_ADD, HP_R_GAIN_ADD, MIXOUT_L_SELECT_ADD, MIXOUT_R_SELECT_ADD, DUMMY_CLOCK_CONFIG1_ADD,  
+	DUMMY_CLOCK_CONFIG2_ADD, DUMMY_CLOCK_CONFIG3_ADD, GAIN_RAMP_CTRL_ADD, LDO_CTRL_ADD, CP_VOL_THRESHOLD1_ADD,
+	CP_DELAY, DAI_CTRL_ADD, SYSTEM_MODES_O_ADD};
+
+
+typedef struct 
+{
+	uint8_t sr;
+	uint8_t	references;
+	uint8_t	pll_frac_top;
+	uint8_t	pll_frac_buttom;
+	uint8_t pll_integer;
+	uint8_t pll_ctrl;
+	uint8_t dig_routing_dac;
+	uint8_t	cp_ctrl;
+	uint8_t hp_l_gain;
+	uint8_t hp_r_gain;	
+	uint8_t mixout_l_select;	
+	uint8_t mixout_r_select;
+	uint8_t	dummy_clock_config1;	
+	uint8_t	dummy_clock_config2;
+	uint8_t	dummy_clock_config3;
+	uint8_t	dummy_clock_config4;
+	uint8_t gain_ramp_ctrl;
+	uint8_t	ldo_ctrl;
+	uint8_t cp_vol_threshold1;
+	uint8_t	cp_delay;
+	uint8_t dai_ctrl;	
+	uint8_t	system_mode;
+	
+}config_structure_t;

@@ -1,0 +1,1 @@
+rtc clock was enabled in line 114 of nrf_drv_config.h,  line 30 clock enable, line 39 gpiote is also enabled

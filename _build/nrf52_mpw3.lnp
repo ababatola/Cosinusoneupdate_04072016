@@ -1,0 +1,25 @@
+--cpu Cortex-M4.fp
+".\_build\main.o"
+".\_build\i2c1_master.o"
+".\_build\audiocodec.o"
+".\_build\i2s_master.o"
+".\_build\real_time_clock.o"
+".\_build\switch.o"
+".\_build\nrf_drv_twi.o"
+".\_build\nrf_delay.o"
+".\_build\nrf_drv_common.o"
+".\_build\nrf_drv_i2s.o"
+".\_build\nrf_drv_clock.o"
+".\_build\nrf_drv_rtc.o"
+".\_build\nrf_drv_gpiote.o"
+".\_build\nrf_drv_ppi.o"
+".\_build\app_error.o"
+".\_build\nrf_assert.o"
+".\_build\app_util_platform.o"
+".\_build\app_error_weak.o"
+".\_build\arm_startup_nrf52.o"
+".\_build\system_nrf52.o"
+--library_type=microlib --strict --scatter ".\_build\nrf52_mpw3.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\_build\nrf52_mpw3.map" -o .\_build\nrf52_mpw3.axf
